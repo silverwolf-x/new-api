@@ -11,10 +11,9 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
-	taskdto "github.com/QuantumNous/new-api/dto"
+	"github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/model"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
-	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/bytedance/gopkg/util/gopool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,9 +37,9 @@ func (a *sunoFailurePollingAdaptor) Init(_ *relaycommon.RelayInfo) {}
 
 func (a *sunoFailurePollingAdaptor) FetchTask(_ string, _ string, body map[string]any, _ string) (*http.Response, error) {
 	taskIDs, _ := body["ids"].([]string)
-	items := make([]taskdto.SunoDataResponse, 0, len(taskIDs))
+	items := make([]dto.SunoDataResponse, 0, len(taskIDs))
 	for _, taskID := range taskIDs {
-		items = append(items, taskdto.SunoDataResponse{
+		items = append(items, dto.SunoDataResponse{
 			TaskID:     taskID,
 			Status:     string(model.TaskStatusFailure),
 			FailReason: a.failReason,
@@ -48,8 +47,8 @@ func (a *sunoFailurePollingAdaptor) FetchTask(_ string, _ string, body map[strin
 		})
 	}
 
-	responseBody, err := common.Marshal(taskdto.TaskResponse[[]taskdto.SunoDataResponse]{
-		Code: taskdto.TaskSuccessCode,
+	responseBody, err := common.Marshal(dto.TaskResponse[[]dto.SunoDataResponse]{
+		Code: dto.TaskSuccessCode,
 		Data: items,
 	})
 	if err != nil {
@@ -92,8 +91,8 @@ func (a *taskPollingFetchAdaptor) FetchTask(_ string, _ string, body map[string]
 		}
 	}
 
-	response := taskdto.TaskResponse[model.Task]{
-		Code: taskdto.TaskSuccessCode,
+	response := dto.TaskResponse[model.Task]{
+		Code: dto.TaskSuccessCode,
 		Data: model.Task{
 			TaskID:   taskID,
 			Status:   model.TaskStatusInProgress,
