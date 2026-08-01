@@ -2,7 +2,7 @@ name: Build Electron App
 
 on:
   schedule:
-    - cron: '17 * * * *'
+    - cron: '0 0 * * *'
   push:
     branches:
       - main
