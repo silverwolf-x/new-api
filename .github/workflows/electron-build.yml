@@ -145,14 +145,24 @@ jobs:
         run: |
           set -euo pipefail
 
-          if ! git remote get-url upstream >/dev/null 2>&1; then
-            git remote add upstream "https://github.com/${UPSTREAM_REPOSITORY}.git"
-          fi
-
+          fork_head="$(git rev-parse HEAD)"
           while IFS= read -r tag; do
-            upstream_ref="refs/upstream/tags/$tag"
-            git fetch upstream "refs/tags/$tag:$upstream_ref"
-            git push origin "$upstream_ref:refs/tags/$tag"
+            if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+              echo "Tag '$tag' already exists in the fork; keeping it for the build."
+              continue
+            fi
+
+            upstream_ref="refs/upstream/releases/$tag"
+            git fetch --no-tags upstream "refs/tags/$tag:$upstream_ref"
+            upstream_commit="$(git rev-parse "$upstream_ref^{commit}")"
+
+            git read-tree --reset -u "$upstream_commit"
+            git checkout "$fork_head" -- .github/workflows
+            git add -A
+            git commit --allow-empty -m "chore: sync upstream release $tag"
+            git tag "$tag" HEAD
+            git push origin "refs/tags/$tag"
+            git reset --hard "$fork_head"
           done < <(jq -r '.[]' <<< "$RELEASE_TAGS")
 
   build:
